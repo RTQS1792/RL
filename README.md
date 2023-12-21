@@ -1,2 +1,2 @@
-# Rendezvous-w.-RL
-Rendezvous with reinforcement learning as final project for CSE 398
+# Reinforcement Learning Project
+Final project for CSE 398 Reinforcement Learning in Robotics.
