@@ -25,18 +25,41 @@ class GridEnvironment:
         self.agents_x = self.starts_x
         return self.agents_x
 
-    def choose_action(self, current_state_x, qtable, ε):
-        if np.random.uniform(0, 1) < ε:
-            original_action = ""
-            for i in range(self.num_agents):
-                original_action += str(np.random.randint(0, 4))
-            return original_action
-        else:
-            current_state_10 = int(current_state_x, self.map_size)
-            max_action_10 = qtable[current_state_10].argmax()
-            max_action_x = np.base_repr(max_action_10, base=5)
-            max_action_x = max_action_x.zfill(4)  # Add leading zeros to make it 4 digits
-        return max_action_x
+    def choose_action(self, current_state_x, qtable, ε, ACTIONS):
+        action = ""
+        while True:
+            if np.random.uniform(0, 1) < ε:
+                original_action = ""
+                for i in range(self.num_agents):
+                    original_action += str(np.random.randint(0, 4))
+                action = original_action.zfill(4)  # Add leading zeros to make it 4 digits
+            else:
+                current_state_10 = int(current_state_x, self.map_size)
+                max_action_10 = qtable[current_state_10].argmax()
+                max_action_x = np.base_repr(max_action_10, base=5)
+                max_action_x = max_action_x.zfill(4)  # Add leading zeros to make it 4 digits
+                action = max_action_x
+            if self.valid_actions(action, ACTIONS):
+                break
+        return action
+    
+    def valid_actions(self, max_action_x, ACTIONS):
+        # Check if a action is valid
+        next_state_x = ""
+        for i in range(self.num_agents):
+            next_state_x += str(int(str(self.agents_x)[2 * i]) + ACTIONS[max_action_x[i]][0])
+            next_state_x += str(int(str(self.agents_x)[2 * i + 1]) + ACTIONS[max_action_x[i]][1])
+        # Check if the agents are in the wall
+        for i in range(self.num_agents):
+            if self.map[int(next_state_x[2 * i]), int(next_state_x[2 * i + 1])] == 1:
+                return False
+
+        # Check if the agents have collided
+        for i in range(self.num_agents):
+            for j in range(i + 1, self.num_agents):
+                if next_state_x[2 * i:2 * i + 2] == next_state_x[2 * j:2 * j + 2]:
+                    return False
+        return True
 
     def step(self, current_action_x, ACTIONS):
         reward = -0.1
@@ -70,7 +93,6 @@ class GridEnvironment:
         # Check if all agents have reached the goal
         if all(self.map[int(next_state_x[2 * i]), int(next_state_x[2 * i + 1])] == 3 for i in range(self.num_agents)):
             done = True
-            print("All agents have reached the goal")
         
         self.agents_x = next_state_x        
         return next_state_x, reward, done
